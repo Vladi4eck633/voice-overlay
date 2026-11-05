@@ -19,13 +19,12 @@ class Controller(QObject):
         self.recorder = Recorder(cfg.sample_rate)
         self.transcriber = Transcriber(cfg.model_name, cfg.language)
         self.injector = TextInjector()
-        self.hotkey = HotkeyListener(cfg.hotkeys)
+        self.hotkey = HotkeyListener(cfg.hotkeys, cfg.toggle_mode)
 
         self._model_ready = False
         self._recording = False
-        self._busy = False  # True while a transcription is running
+        self._busy = False
 
-        # Signals from background threads -> our slots (run in the Qt main thread).
         self.hotkey.pressed.connect(self._on_press, Qt.QueuedConnection)
         self.hotkey.released.connect(self._on_release, Qt.QueuedConnection)
         self.recorder.level.connect(self.overlay.set_level, Qt.QueuedConnection)
@@ -41,11 +40,23 @@ class Controller(QObject):
     def stop(self) -> None:
         self.hotkey.stop()
 
-    # ---- slots ---------
+    def set_model(self, name: str) -> bool:
+        """Called from the tray menu. Returns True if the switch was accepted."""
+        if name == self.transcriber.model_name:
+            return True
+        if not self._model_ready or self._recording or self._busy:
+            self.overlay.flash("Wait until the current task is finished", 2000)
+            return False
+        self._model_ready = False
+        self.transcriber.model_name = name
+        self.overlay.set_state(State.LOADING, f"Loading {name}…")
+        self.transcriber.load_async()
+        return True
+
     @Slot()
     def _on_model_ready(self) -> None:
         self._model_ready = True
-        self.overlay.flash("Ready: hold Right Alt and speak", 2000)
+        self.overlay.flash("Ready: press Right Alt to start/stop", 2000)
 
     @Slot()
     def _on_press(self) -> None:
@@ -70,7 +81,7 @@ class Controller(QObject):
         audio = self.recorder.stop()
 
         if len(audio) / self.cfg.sample_rate < self.cfg.min_seconds:
-            self.overlay.set_state(State.HIDDEN)  # too short, ignore
+            self.overlay.set_state(State.HIDDEN)
             return
 
         self._busy = True
@@ -82,7 +93,7 @@ class Controller(QObject):
         self._busy = False
         if text:
             self.injector.paste(text)
-            self.overlay.flash("Done", 600)
+            self.overlay.flash("✓ Done", 600)
         else:
             self.overlay.flash("Nothing heard", 1200)
 

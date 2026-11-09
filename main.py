@@ -35,26 +35,7 @@ def main() -> int:
     menu = QMenu()
     quit_action = QAction("Quit")
     quit_action.triggered.connect(app.quit)
-    # Model submenu with radio-style items
-    model_menu = menu.addMenu("Model")
-    group = QActionGroup(model_menu)
-    group.setExclusive(True)
-    model_actions = {}
 
-    def on_model_chosen(name: str) -> None:
-        if not controller.set_model(name):
-            # Switch was refused: put the check mark back on the model in use
-            model_actions[controller.transcriber.model_name].setChecked(True)
-
-    for name, label in cfg.models:
-        act = QAction(f"{label}  ({name})", model_menu)
-        act.setCheckable(True)
-        act.setChecked(name == cfg.model_name)
-        act.triggered.connect(lambda checked=False, n=name: on_model_chosen(n))
-        group.addAction(act)
-        model_menu.addAction(act)
-        model_actions[name] = act
-    menu.addSeparator()
     menu.addAction(quit_action)
     tray.setContextMenu(menu)
     tray.show()

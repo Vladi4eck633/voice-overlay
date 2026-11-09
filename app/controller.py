@@ -40,18 +40,6 @@ class Controller(QObject):
     def stop(self) -> None:
         self.hotkey.stop()
 
-    def set_model(self, name: str) -> bool:
-        """Called from the tray menu. Returns True if the switch was accepted."""
-        if name == self.transcriber.model_name:
-            return True
-        if not self._model_ready or self._recording or self._busy:
-            self.overlay.flash("Wait until the current task is finished", 2000)
-            return False
-        self._model_ready = False
-        self.transcriber.model_name = name
-        self.overlay.set_state(State.LOADING, f"Loading {name}…")
-        self.transcriber.load_async()
-        return True
 
     @Slot()
     def _on_model_ready(self) -> None:

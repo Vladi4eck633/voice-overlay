@@ -6,7 +6,7 @@ class HotkeyListener(QObject):
     """Global hotkey listener. Supports hold (push-to-talk) and toggle modes."""
 
     pressed = Signal()   # means "start recording"
-    released = Signal()  # means "stop recording"
+    released = Signal()  
 
     def __init__(self, keys, toggle: bool = False):
         super().__init__()

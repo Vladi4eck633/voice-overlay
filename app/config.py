@@ -15,12 +15,6 @@ class Config:
     # English-only model
     model_name: str = "small.en"
     language: str = "en"
-    # (model name, one-word label shown in the tray menu)
-    models: tuple = (
-        ("tiny.en", "Fastest"),
-        ("base.en", "Balanced"),
-        ("small.en", "Accurate"),
-    )
 
     sample_rate: int = 16000
     min_seconds: float = 0.4
